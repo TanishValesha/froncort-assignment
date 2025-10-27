@@ -25,9 +25,8 @@ import {
 import { Toggle } from "../ui/toggle";
 import { Button } from "../ui/button";
 import { Editor } from "@tiptap/react";
-import { useCallback, useRef, useState, ReactNode } from "react";
+import { useCallback, useRef, useState } from "react";
 import {
-    DropdownMenuItem,
     DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import {

@@ -101,11 +101,10 @@ export default function RichTextEditor({
                 suggestion: {
                     items: ({ query }) => {
                         return [
-                            "John Doe",
-                            "Jane Smith",
-                            "Mike Johnson",
-                            "Sarah Williams",
-                            "David Brown",
+                            "Luka",
+                            "Kobe",
+                            "James",
+                            "Victor",
                         ]
                             .filter((item) =>
                                 item.toLowerCase().startsWith(query.toLowerCase())

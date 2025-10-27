@@ -1,5 +1,5 @@
 "use client";
-import Sidebar from "@/components/Editor/Sidebar";
+import Sidebar from "@/components/Sidebar/Sidebar";
 import { useState } from "react";
 import {
   ResizableHandle,
@@ -17,16 +17,12 @@ export default function Home() {
     console.log(content);
   };
 
-  const handleSave = () => {
-    console.log("Saving document...", post);
-  };
 
   return (
     <div className="h-screen bg-slate-100">
       <ResizablePanelGroup direction="horizontal">
         <ResizablePanel defaultSize={20} minSize={15} maxSize={35}>
           <Sidebar
-            onSave={handleSave}
           />
         </ResizablePanel>
 
