@@ -12,23 +12,22 @@ import {
     ListOrdered,
     Strikethrough,
     CheckSquare,
-    Table as TableIcon,
+    Table,
     Code,
-    Link as LinkIcon,
-    Image as ImageIcon,
+    Link,
+    Image,
     Columns,
     Rows,
     Trash2,
+    Type,
+    AlignJustify,
 } from "lucide-react";
 import { Toggle } from "../ui/toggle";
 import { Button } from "../ui/button";
 import { Editor } from "@tiptap/react";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useRef, useState, ReactNode } from "react";
 import {
-    DropdownMenu,
-    DropdownMenuContent,
     DropdownMenuItem,
-    DropdownMenuTrigger,
     DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -37,6 +36,14 @@ import {
     PopoverTrigger,
 } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
+import ToolbarDropdown from "./ToolbarDropdown";
+import ToolbarDropdownItem from "./ToolbarMenuItem";
+
 
 export default function MenuBar({ editor }: { editor: Editor | null }) {
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -117,134 +124,202 @@ export default function MenuBar({ editor }: { editor: Editor | null }) {
 
     const insertTable = useCallback(() => {
         if (!editor) return;
-        editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
+        editor
+            .chain()
+            .focus()
+            .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
+            .run();
     }, [editor]);
 
     if (!editor) {
         return null;
     }
 
-    const Options = [
+    const textFormattingOptions = [
         {
-            icon: <Heading1 className="size-4" />,
-            onClick: () => {
-                if (editor.isActive("heading", { level: 1 })) {
-                    editor.chain().focus().setParagraph().run();
-                } else {
-                    editor.chain().focus().setHeading({ level: 1 }).run();
-                }
-            },
-            pressed: editor.isActive("heading", { level: 1 }),
-        },
-        {
-            icon: <Heading2 className="size-4" />,
-            onClick: () => {
-                if (editor.isActive("heading", { level: 2 })) {
-                    editor.chain().focus().setParagraph().run();
-                } else {
-                    editor.chain().focus().setHeading({ level: 2 }).run();
-                }
-            },
-            pressed: editor.isActive("heading", { level: 2 }),
-        },
-        {
-            icon: <Heading3 className="size-4" />,
-            onClick: () => {
-                if (editor.isActive("heading", { level: 3 })) {
-                    editor.chain().focus().setParagraph().run();
-                } else {
-                    editor.chain().focus().setHeading({ level: 3 }).run();
-                }
-            },
-            pressed: editor.isActive("heading", { level: 3 }),
-        },
-        {
-            icon: <Bold className="size-4" />,
+            icon: <Bold className="size-5" />,
             onClick: () => editor.chain().focus().toggleBold().run(),
             pressed: editor.isActive("bold"),
+            toolName: "Bold",
         },
         {
-            icon: <Italic className="size-4" />,
+            icon: <Italic className="size-5" />,
             onClick: () => editor.chain().focus().toggleItalic().run(),
             pressed: editor.isActive("italic"),
+            toolName: "Italic",
         },
         {
-            icon: <Strikethrough className="size-4" />,
+            icon: <Strikethrough className="size-5" />,
             onClick: () => editor.chain().focus().toggleStrike().run(),
             pressed: editor.isActive("strike"),
+            toolName: "Strikethrough",
         },
         {
-            icon: <AlignLeft className="size-4" />,
-            onClick: () => editor.chain().focus().setTextAlign("left").run(),
-            pressed: editor.isActive({ textAlign: "left" }),
-        },
-        {
-            icon: <AlignCenter className="size-4" />,
-            onClick: () => editor.chain().focus().setTextAlign("center").run(),
-            pressed: editor.isActive({ textAlign: "center" }),
-        },
-        {
-            icon: <AlignRight className="size-4" />,
-            onClick: () => editor.chain().focus().setTextAlign("right").run(),
-            pressed: editor.isActive({ textAlign: "right" }),
-        },
-        {
-            icon: <List className="size-4" />,
-            onClick: () => editor.chain().focus().toggleBulletList().run(),
-            pressed: editor.isActive("bulletList"),
-        },
-        {
-            icon: <ListOrdered className="size-4" />,
-            onClick: () => editor.chain().focus().toggleOrderedList().run(),
-            pressed: editor.isActive("orderedList"),
-        },
-        {
-            icon: <CheckSquare className="size-4" />,
-            onClick: () => editor.chain().focus().toggleTaskList().run(),
-            pressed: editor.isActive("taskList"),
-        },
-        {
-            icon: <Highlighter className="size-4" />,
+            icon: <Highlighter className="size-5" />,
             onClick: () => editor.chain().focus().toggleHighlight().run(),
             pressed: editor.isActive("highlight"),
+            toolName: "Highlight",
+        },
+    ];
+
+    const listOptions = [
+        {
+            icon: <List className="size-5" />,
+            onClick: () => editor.chain().focus().toggleBulletList().run(),
+            pressed: editor.isActive("bulletList"),
+            toolName: "Bullet List",
         },
         {
-            icon: <Code className="size-4" />,
-            onClick: () => editor.chain().focus().toggleCodeBlock().run(),
-            pressed: editor.isActive("codeBlock"),
+            icon: <ListOrdered className="size-5" />,
+            onClick: () => editor.chain().focus().toggleOrderedList().run(),
+            pressed: editor.isActive("orderedList"),
+            toolName: "Ordered List",
         },
         {
-            icon: <ImageIcon className="size-4" />,
-            onClick: addImage,
-            pressed: false,
+            icon: <CheckSquare className="size-5" />,
+            onClick: () => editor.chain().focus().toggleTaskList().run(),
+            pressed: editor.isActive("taskList"),
+            toolName: "Task List",
         },
     ];
 
     return (
         <div className="p-2 space-x-2 flex flex-wrap justify-start items-center gap-1">
-            {Options.map((option, index) => (
-                <Toggle
-                    key={index}
-                    pressed={option.pressed}
-                    onPressedChange={option.onClick}
-                >
-                    {option.icon}
-                </Toggle>
+            <ToolbarDropdown
+                icon={<Type className="size-5" />}
+                tooltip="Headings"
+                isActive={editor.isActive("heading")}
+            >
+                <ToolbarDropdownItem
+                    icon={<Heading1 className="size-5" />}
+                    label="Heading 1"
+                    onClick={() => {
+                        if (editor.isActive("heading", { level: 1 })) {
+                            editor.chain().focus().setParagraph().run();
+                        } else {
+                            editor.chain().focus().setHeading({ level: 1 }).run();
+                        }
+                    }}
+                    isActive={editor.isActive("heading", { level: 1 })}
+                />
+                <ToolbarDropdownItem
+                    icon={<Heading2 className="size-5" />}
+                    label="Heading 2"
+                    onClick={() => {
+                        if (editor.isActive("heading", { level: 2 })) {
+                            editor.chain().focus().setParagraph().run();
+                        } else {
+                            editor.chain().focus().setHeading({ level: 2 }).run();
+                        }
+                    }}
+                    isActive={editor.isActive("heading", { level: 2 })}
+                />
+                <ToolbarDropdownItem
+                    icon={<Heading3 className="size-5" />}
+                    label="Heading 3"
+                    onClick={() => {
+                        if (editor.isActive("heading", { level: 3 })) {
+                            editor.chain().focus().setParagraph().run();
+                        } else {
+                            editor.chain().focus().setHeading({ level: 3 }).run();
+                        }
+                    }}
+                    isActive={editor.isActive("heading", { level: 3 })}
+                />
+            </ToolbarDropdown>
+
+            {/* Text Formatting */}
+            {textFormattingOptions.map((option, index) => (
+                <Tooltip key={index}>
+                    <TooltipTrigger asChild>
+                        <Toggle
+                            pressed={option.pressed}
+                            onPressedChange={option.onClick}
+                            className={option.pressed ? "bg-slate-200" : ""}
+                        >
+                            {option.icon}
+                        </Toggle>
+
+                    </TooltipTrigger>
+                    <TooltipContent>{option.toolName}</TooltipContent>
+                </Tooltip>
             ))}
 
-            {/* Link Popover */}
-            <Popover open={isLinkPopoverOpen} onOpenChange={setIsLinkPopoverOpen}>
-                <PopoverTrigger asChild>
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={setLink}
-                        className={`h-9 w-9 p-0 ${editor.isActive("link") ? "bg-slate-200" : ""
-                            }`}
+            {/* Text Alignment Dropdown */}
+            <ToolbarDropdown
+                icon={<AlignJustify className="size-5" />}
+                tooltip="Text Alignment"
+            >
+                <ToolbarDropdownItem
+                    icon={<AlignLeft className="size-5" />}
+                    label="Align Left"
+                    onClick={() => editor.chain().focus().setTextAlign("left").run()}
+                    isActive={editor.isActive({ textAlign: "left" })}
+                />
+                <ToolbarDropdownItem
+                    icon={<AlignCenter className="size-5" />}
+                    label="Align Center"
+                    onClick={() => editor.chain().focus().setTextAlign("center").run()}
+                    isActive={editor.isActive({ textAlign: "center" })}
+                />
+                <ToolbarDropdownItem
+                    icon={<AlignRight className="size-5" />}
+                    label="Align Right"
+                    onClick={() => editor.chain().focus().setTextAlign("right").run()}
+                    isActive={editor.isActive({ textAlign: "right" })}
+                />
+            </ToolbarDropdown>
+
+            {/* Lists */}
+            {listOptions.map((option, index) => (
+                <Tooltip key={index}>
+                    <TooltipTrigger asChild>
+                        <Toggle
+                            pressed={option.pressed}
+                            onPressedChange={option.onClick}
+                        >
+                            {option.icon}
+                        </Toggle>
+                    </TooltipTrigger>
+                    <TooltipContent>{option.toolName}</TooltipContent>
+                </Tooltip>
+            ))}
+
+            {/* Code Block */}
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Toggle
+                        pressed={editor.isActive("codeBlock")}
+                        onPressedChange={() =>
+                            editor.chain().focus().toggleCodeBlock().run()
+                        }
                     >
-                        <LinkIcon className="size-4" />
-                    </Button>
-                </PopoverTrigger>
+                        <Code className="size-5" />
+                    </Toggle>
+                </TooltipTrigger>
+                <TooltipContent>Code Block</TooltipContent>
+            </Tooltip>
+
+            <Popover
+                open={isLinkPopoverOpen}
+                onOpenChange={setIsLinkPopoverOpen}
+            >
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <PopoverTrigger asChild>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={setLink}
+                                className={`h-9 w-9 p-0 ${editor.isActive("link") ? "bg-slate-200" : ""
+                                    }`}
+                            >
+                                <Link className="size-5" />
+                            </Button>
+                        </PopoverTrigger>
+                    </TooltipTrigger>
+                    <TooltipContent>Insert Link</TooltipContent>
+                </Tooltip>
                 <PopoverContent className="w-80" align="start">
                     <div className="space-y-3">
                         <h4 className="font-medium text-sm">Insert Link</h4>
@@ -292,89 +367,76 @@ export default function MenuBar({ editor }: { editor: Editor | null }) {
                 </PopoverContent>
             </Popover>
 
-            {/* Table Dropdown */}
-            <DropdownMenu>
-                <DropdownMenuTrigger asChild>
+            {/* Image Upload */}
+            <Tooltip>
+                <TooltipTrigger asChild>
                     <Button
                         variant="ghost"
                         size="sm"
-                        className={`h-9 w-9 p-0 ${editor.isActive("table") ? "bg-slate-200" : ""
-                            }`}
+                        onClick={addImage}
+                        className="h-9 w-9 p-0"
                     >
-                        <TableIcon className="size-4" />
+                        <Image className="size-5" />
                     </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start">
-                    <DropdownMenuItem onClick={insertTable}>
-                        <TableIcon className="size-4 mr-2" />
-                        Insert Table
-                    </DropdownMenuItem>
-                    {editor.isActive("table") && (
-                        <>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                                onClick={() =>
-                                    editor.chain().focus().addColumnBefore().run()
-                                }
-                            >
-                                <Columns className="size-4 mr-2" />
-                                Add Column Before
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                                onClick={() =>
-                                    editor.chain().focus().addColumnAfter().run()
-                                }
-                            >
-                                <Columns className="size-4 mr-2" />
-                                Add Column After
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                                onClick={() =>
-                                    editor.chain().focus().deleteColumn().run()
-                                }
-                            >
-                                <Trash2 className="size-4 mr-2" />
-                                Delete Column
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                                onClick={() =>
-                                    editor.chain().focus().addRowBefore().run()
-                                }
-                            >
-                                <Rows className="size-4 mr-2" />
-                                Add Row Before
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                                onClick={() =>
-                                    editor.chain().focus().addRowAfter().run()
-                                }
-                            >
-                                <Rows className="size-4 mr-2" />
-                                Add Row After
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                                onClick={() =>
-                                    editor.chain().focus().deleteRow().run()
-                                }
-                            >
-                                <Trash2 className="size-4 mr-2" />
-                                Delete Row
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                                onClick={() =>
-                                    editor.chain().focus().deleteTable().run()
-                                }
-                                className="text-red-600"
-                            >
-                                <Trash2 className="size-4 mr-2" />
-                                Delete Table
-                            </DropdownMenuItem>
-                        </>
-                    )}
-                </DropdownMenuContent>
-            </DropdownMenu>
+                </TooltipTrigger>
+                <TooltipContent>Insert Image</TooltipContent>
+            </Tooltip>
+
+            {/* Table Dropdown */}
+            <ToolbarDropdown
+                icon={<Table className="size-5" />}
+                tooltip="Table Options"
+                isActive={editor.isActive("table")}
+            >
+                <ToolbarDropdownItem
+                    icon={<Table className="size-5" />}
+                    label="Insert Table"
+                    onClick={insertTable}
+                />
+                {editor.isActive("table") && (
+                    <>
+                        <DropdownMenuSeparator />
+                        <ToolbarDropdownItem
+                            icon={<Columns className="size-5" />}
+                            label="Add Column Before"
+                            onClick={() => editor.chain().focus().addColumnBefore().run()}
+                        />
+                        <ToolbarDropdownItem
+                            icon={<Columns className="size-5" />}
+                            label="Add Column After"
+                            onClick={() => editor.chain().focus().addColumnAfter().run()}
+                        />
+                        <ToolbarDropdownItem
+                            icon={<Trash2 className="size-5" />}
+                            label="Delete Column"
+                            onClick={() => editor.chain().focus().deleteColumn().run()}
+                        />
+                        <DropdownMenuSeparator />
+                        <ToolbarDropdownItem
+                            icon={<Rows className="size-5" />}
+                            label="Add Row Before"
+                            onClick={() => editor.chain().focus().addRowBefore().run()}
+                        />
+                        <ToolbarDropdownItem
+                            icon={<Rows className="size-5" />}
+                            label="Add Row After"
+                            onClick={() => editor.chain().focus().addRowAfter().run()}
+                        />
+                        <ToolbarDropdownItem
+                            icon={<Trash2 className="size-5" />}
+                            label="Delete Row"
+                            onClick={() => editor.chain().focus().deleteRow().run()}
+                        />
+                        <DropdownMenuSeparator />
+                        <ToolbarDropdownItem
+                            icon={<Trash2 className="size-5" />}
+                            label="Delete Table"
+                            onClick={() => editor.chain().focus().deleteTable().run()}
+                            variant="danger"
+                        />
+                    </>
+                )}
+            </ToolbarDropdown>
 
             <input
                 type="file"
